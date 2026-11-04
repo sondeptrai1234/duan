@@ -1,0 +1,53 @@
+{
+  "expo": {
+    "name": "EcoSort - Smart Recycling",
+    "slug": "ecosort-smart-waste",
+    "version": "2.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "EcoSort cần quyền camera để chụp ảnh và nhận diện rác."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "EcoSort cần truy cập ảnh để bạn chọn ảnh rác cần phân loại."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "EcoSort dùng vị trí khi ứng dụng mở để tìm điểm thu gom rác gần bạn."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#13865A"
+        }
+      ]
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "scheme": "ecosort"
+  }
+}
