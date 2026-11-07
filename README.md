@@ -1,17 +1,7 @@
-# EcoBin - Hệ Thống Thùng Rác Thông Minh Phân Loại Bằng AI (Nhóm 4)
+# Hệ Thống Thùng Rác Thông Minh Phân Loại Bằng AI (Nhóm 4)
 
 Dự án ứng dụng di động (React Native / Expo) kết hợp hệ thống thùng rác thông minh 2 ngăn (Hữu cơ & Vô cơ) điều khiển bởi Raspberry Pi và mô hình AI YOLOv8.
 
----
-
-## 🌟 Tính năng chính
-
-- **Quét rác & Phân loại AI**: Nhận diện tức thì 8 nhóm rác thải qua camera hoặc ảnh chụp từ thư viện, tự động xác định ngăn thùng rác và cung cấp hướng dẫn xử lý/tái chế chi tiết.
-- **Bản đồ điểm thu gom rác thực tế**: Bản đồ nền Google Maps thời gian thực, tự động định vị GPS và tìm kiếm các trạm thu gom rác tái chế, vựa phế liệu gần nhất tại TP.HCM kèm chỉ dẫn đường đi bộ chi tiết.
-- **Trợ lý AI EcoBin**: Chatbot hỏi đáp thông minh hỗ trợ giải đáp thắc mắc về phân loại rác, bảo vệ môi trường và quy chuẩn tái chế.
-- **Giám sát thùng rác IoT**: Theo dõi độ đầy riêng biệt 2 ngăn (Hữu cơ & Vô cơ), trạng thái nắp thùng và lịch sử hoạt động đồng bộ với thiết bị phần cứng.
-
----
 
 ## 🚀 Hướng dẫn cài đặt & Khởi chạy
 
