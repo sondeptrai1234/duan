@@ -30,11 +30,7 @@ npm install
 npm start
 ```
 
-- API chạy mặc định tại: `http://localhost:3000`
-- File cấu hình: Tạo file `server/.env` từ file mẫu `server/.env.example` (nếu chưa có SQL Server, hệ thống sẽ tự động dùng Mock Database bộ nhớ đệm để app vẫn chạy mượt mà không lỗi).
-
----
-
+mở thư mục sql: connect và chạy.
 ### 3. Mã nguồn Raspberry Pi & AI YOLOv8
 
 Toàn bộ code chạy trên phần cứng nhúng Raspberry Pi, script kết nối camera ESP32 và mô hình YOLOv8 (`best.pt`) đã được tách riêng trong thư mục:
