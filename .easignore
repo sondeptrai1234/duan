@@ -1,0 +1,36 @@
+# Dependencies & caches
+node_modules/
+.expo/
+dist/
+web-build/
+.git/
+
+# Native folders (generated cleanly on EAS via Prebuild + plugins/withAndroidFixes.js)
+/android
+/ios
+
+# Large Python/YOLO training artifacts (app only uses assets/models/best_float32.tflite)
+*.pt
+*.onnx
+best_saved_model/
+calibration_image_sample_data*
+
+# Backend & dev tools not needed inside mobile APK
+server/
+tools/
+smartbin_brain.py
+yolo_predict.py
+
+# Env & logs
+.env
+.env.*
+!.env.example
+*.log
+*.tsbuildinfo
+.DS_Store
+*.jks
+*.keystore
+*.p8
+*.p12
+*.key
+*.pem

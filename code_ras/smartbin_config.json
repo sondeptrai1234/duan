@@ -1,0 +1,8 @@
+{
+  "esp32_ip": "192.168.1.100",
+  "backend_url": "http://192.168.1.50:3000",
+  "mac_address": "PI-NHOM4-001",
+  "model_path": "best.pt",
+  "conf_threshold": 0.35,
+  "lid_open_seconds": 5.0
+}

@@ -1,0 +1,71 @@
+{
+  "name": "nhom4-smart-waste",
+  "version": "1.0.0",
+  "private": true,
+  "main": "index.ts",
+  "scripts": {
+    "start": "expo start",
+    "start:clear": "expo start -c",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
+    "web": "expo start --web",
+    "typecheck": "tsc --noEmit",
+    "doctor": "expo-doctor",
+    "start:all": "node tools/run.js",
+    "start:lan": "expo start --lan",
+    "start:dev-client": "expo start --dev-client --lan",
+    "build:android:dev": "npx eas-cli@latest build --platform android --profile development",
+    "build:android:preview": "npx eas-cli@latest build --platform android --profile preview",
+    "eas:login": "npx eas-cli@latest login",
+    "eas:init": "npx eas-cli@latest init"
+  },
+  "dependencies": {
+    "@expo/vector-icons": "^15.0.2",
+    "@react-navigation/bottom-tabs": "^7.21.0",
+    "@react-navigation/native": "^7.5.1",
+    "@react-navigation/native-stack": "^7.21.0",
+    "@tamagui/config": "^3.0.18",
+    "base64-js": "^1.5.1",
+    "expo": "~58.0.20",
+    "expo-camera": "~58.0.12",
+    "expo-constants": "~58.0.15",
+    "expo-dev-client": "~58.0.18",
+    "expo-file-system": "~58.0.13",
+    "expo-font": "~58.0.11",
+    "expo-image-manipulator": "~58.0.16",
+    "expo-image-picker": "~58.0.10",
+    "expo-location": "~58.0.20",
+    "expo-notifications": "~58.1.8",
+    "expo-status-bar": "~58.0.4",
+    "expo-updates": "~58.0.21",
+    "jpeg-js": "^0.4.4",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "react-native": "0.88.1",
+    "react-native-fast-tflite": "^3.0.1",
+    "react-native-gesture-handler": "~3.3.0",
+    "react-native-maps": "~1.29.11",
+    "react-native-nitro-modules": "^0.37.2",
+    "react-native-reanimated": "4.7.1",
+    "react-native-safe-area-context": "~5.11.1",
+    "react-native-screens": "~4.30.0",
+    "react-native-web": "^0.21.4",
+    "react-native-webview": "14.0.1",
+    "react-native-worklets": "0.13.0",
+    "tamagui": "^3.2.1"
+  },
+  "devDependencies": {
+    "@types/react": "~19.3.0",
+    "typescript": "~6.0.3"
+  },
+  "expo": {
+    "doctor": {
+      "reactNativeDirectoryCheck": {
+        "exclude": [
+          "react-native-fast-tflite"
+        ]
+      }
+    }
+  },
+  "description": "Nhom4 - Smart waste sorting mobile app"
+}
