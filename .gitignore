@@ -45,3 +45,8 @@ venv/
 # System & OS
 .DS_Store
 Thumbs.db
+
+# Extra AI exports & Temporary Local Scripts
+best_saved_model/
+*.bat
+tools/
