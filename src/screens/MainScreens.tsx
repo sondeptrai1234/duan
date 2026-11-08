@@ -522,7 +522,7 @@ class SafeMapErrorBoundary extends React.Component<{ fallback?: React.ReactNode;
 // COMPONENT BẢN ĐỒ GOOGLE MAPS THỜI GIAN THỰC (KHÔNG CẦN API KEY, KHÔNG BỊ ĐEN MÀN HÌNH)
 function LeafletMapView({
   mapRef,
-  center,
+  initialCenter,
   points,
   selected,
   routeLine,
@@ -530,7 +530,7 @@ function LeafletMapView({
   onCenterChanged,
 }: {
   mapRef?: any;
-  center: LatLng;
+  initialCenter: LatLng;
   points: GeoPoint[];
   selected: GeoPoint | null;
   routeLine: LatLng[];
@@ -541,8 +541,8 @@ function LeafletMapView({
   const activeRef = mapRef || localRef;
 
   const html = useMemo(() => {
-    const lat = center.latitude;
-    const lon = center.longitude;
+    const lat = initialCenter.latitude;
+    const lon = initialCenter.longitude;
 
     const markersCode = points.map((p) => {
       const isSel = selected?.id === p.id;
@@ -585,9 +585,7 @@ function LeafletMapView({
       var coords = ${JSON.stringify(routeLine.map((c) => [c.latitude, c.longitude]))};
       var poly = L.polyline(coords, { color: '#1A73E8', weight: 6, opacity: 0.9, lineCap: 'round', lineJoin: 'round' }).addTo(map);
       map.fitBounds(poly.getBounds(), { padding: [40, 40] });
-    ` : `
-      map.setView([${lat}, ${lon}], 15);
-    `;
+    ` : ``;
 
     return `
       <!DOCTYPE html>
@@ -714,7 +712,7 @@ function LeafletMapView({
       </body>
       </html>
     `;
-  }, [center.latitude, center.longitude, points, selected?.id, routeLine]);
+  }, [initialCenter.latitude, initialCenter.longitude, points, selected?.id, routeLine]);
 
   const WebViewComp = WebView as any;
 
@@ -755,9 +753,10 @@ export function RecyclingMapScreen() {
   const mapRef = useRef<any>(null);
   const [locationState, setLocationState] = useState<"idle" | "loading" | "granted" | "denied">("idle");
   const [current, setCurrent] = useState<LatLng | null>(null);
-  const [searchCenter, setSearchCenter] = useState<LatLng | null>(null);
+  const mapCenterRef = useRef<LatLng | null>(null);
   const [address, setAddress] = useState("Đang định vị địa chỉ thực tế...");
-  const [points, setPoints] = useState<GeoPoint[]>(REAL_VIETNAM_RECYCLING_POINTS);
+  // BAN ĐẦU CHƯA HIỆN ĐIỂM THU GOM (KHI BẤM 'TÌM QUANH ĐÂY' MỚI QUÉT VÀ HIỆN)
+  const [points, setPoints] = useState<GeoPoint[]>([]);
   const [searching, setSearching] = useState(false);
   const [selected, setSelected] = useState<GeoPoint | null>(null);
   const [routeLine, setRouteLine] = useState<LatLng[]>([]);
@@ -768,8 +767,8 @@ export function RecyclingMapScreen() {
 
   // Tính khoảng cách thực tế từ vị trí hiện tại đến các điểm thu gom và sắp xếp gần nhất trước
   const sortedPoints = useMemo(() => {
-    const origin = searchCenter || current;
-    if (!origin) return points;
+    const origin = current || DEFAULT_MAP_REGION;
+    if (!origin || points.length === 0) return [];
     return [...points].map((p) => {
       const rad = (n: number) => (n * Math.PI) / 180;
       const dLat = rad(p.lat - origin.latitude);
@@ -778,7 +777,7 @@ export function RecyclingMapScreen() {
       const d = Math.round(6371000 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
       return { ...p, distanceMeters: d };
     }).sort((a, b) => a.distanceMeters - b.distanceMeters);
-  }, [points, searchCenter, current]);
+  }, [points, current]);
 
   const reverseAddress = async (point: LatLng) => {
     try {
@@ -789,7 +788,7 @@ export function RecyclingMapScreen() {
     }
   };
 
-  const locate = async () => {
+  const locate = async (flyToUser = false) => {
     setLocationState("loading");
     try {
       const permission = await Location.requestForegroundPermissionsAsync();
@@ -801,73 +800,92 @@ export function RecyclingMapScreen() {
       const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
       const point = { latitude: loc.coords.latitude, longitude: loc.coords.longitude };
       setCurrent(point);
-      setSearchCenter(point);
+      mapCenterRef.current = point;
       setLocationState("granted");
 
-      // TỰ ĐỘNG CHUYỂN ĐỘNG / BAY VỀ VỊ TRÍ GPS CỦA MÌNH (FLY TO LOCATION GIỐNG GOOGLE MAPS)
-      mapRef.current?.injectJavaScript(`
-        if (typeof window.flyToLocation === 'function') {
-          window.flyToLocation(${point.latitude}, ${point.longitude}, 16);
-        }
-        true;
-      `);
+      if (flyToUser) {
+        mapRef.current?.injectJavaScript(`
+          if (typeof window.flyToLocation === 'function') {
+            window.flyToLocation(${point.latitude}, ${point.longitude}, 16);
+          }
+          true;
+        `);
+      }
 
       await reverseAddress(point);
-      await searchAround(point, false);
     } catch (error: any) {
       setLocationState("denied");
-      // Fallback default coordinates (khu vực Gò Vấp - Nhà V Nguyễn Văn Bảo)
       const def = { latitude: 10.8222, longitude: 106.6875 };
       setCurrent(def);
-      setSearchCenter(def);
-      mapRef.current?.injectJavaScript(`
-        if (typeof window.flyToLocation === 'function') {
-          window.flyToLocation(10.8222, 106.6875, 16);
-        }
-        true;
-      `);
+      mapCenterRef.current = def;
       setAddress("Nhà V, Nguyễn Văn Bảo, Phường 4, Quận Gò Vấp, TP. Hồ Chí Minh");
+      if (flyToUser) {
+        mapRef.current?.injectJavaScript(`
+          if (typeof window.flyToLocation === 'function') {
+            window.flyToLocation(10.8222, 106.6875, 16);
+          }
+          true;
+        `);
+      }
     }
   };
 
-  const searchAround = async (point = searchCenter || current, showAlert = true) => {
-    if (!point) return;
+  // NÚT "VỊ TRÍ CỦA TÔI": Bay mượt về vị trí GPS người dùng
+  const goToMyLocation = async () => {
+    if (current) {
+      mapRef.current?.injectJavaScript(`
+        if (typeof window.flyToLocation === 'function') {
+          window.flyToLocation(${current.latitude}, ${current.longitude}, 16);
+        }
+        true;
+      `);
+    }
+    await locate(true);
+  };
+
+  // NÚT "TÌM QUANH ĐÂY": Quét và cập nhật các điểm thu gom rác thực tế
+  const searchAround = async () => {
+    const origin = mapCenterRef.current || current || DEFAULT_MAP_REGION;
     setSearching(true);
     try {
-      const result = await api.get<{ ok: boolean; points: GeoPoint[]; count: number }>(`/api/recycling-points?lat=${point.latitude}&lon=${point.longitude}&radius=20000`);
+      const result = await api.get<{ ok: boolean; points: GeoPoint[]; count: number }>(
+        `/api/recycling-points?lat=${origin.latitude}&lon=${origin.longitude}&radius=20000`
+      );
       if (result.points && result.points.length > 0) {
         setPoints(result.points);
-        // Tự động chọn điểm gần nhất và vẽ lộ trình
-        const nearest = result.points[0];
-        selectPoint(nearest);
-        const kmStr = nearest.distanceMeters >= 1000 ? `${(nearest.distanceMeters / 1000).toFixed(1)} km` : `${nearest.distanceMeters} m`;
-        if (showAlert) {
-          Alert.alert(
-            "Đã tìm thấy điểm thu gom thực tế! 📍",
-            `Đã quét và tải lại ${result.points.length} điểm thu gom rác tái chế quanh khu vực này.\n\nĐiểm gần nhất: ${nearest.name} (${kmStr}). Đang chỉ đường trên bản đồ!`
-          );
-        }
+        Alert.alert(
+          "Đã tìm thấy điểm thu gom thực tế! 📍",
+          `Đã tìm thấy ${result.points.length} trạm thu gom rác tái chế quanh khu vực này.\n\nChạm vào một điểm trên bản đồ hoặc danh sách bên dưới để xem thông tin và chỉ đường.`
+        );
       } else {
         setPoints(REAL_VIETNAM_RECYCLING_POINTS);
+        Alert.alert(
+          "Điểm thu gom thực tế TP.HCM 📍",
+          `Đã tải ${REAL_VIETNAM_RECYCLING_POINTS.length} điểm thu gom rác tái chế tiêu biểu tại TP. Hồ Chí Minh.`
+        );
       }
     } catch {
       setPoints(REAL_VIETNAM_RECYCLING_POINTS);
+      Alert.alert(
+        "Điểm thu gom thực tế TP.HCM 📍",
+        `Đã tải ${REAL_VIETNAM_RECYCLING_POINTS.length} điểm thu gom rác tái chế tại TP. Hồ Chí Minh.`
+      );
     } finally {
       setSearching(false);
     }
   };
 
   const searchGoogleMapsOnline = () => {
-    const origin = searchCenter || current || DEFAULT_MAP_REGION;
+    const origin = mapCenterRef.current || current || DEFAULT_MAP_REGION;
     const url = `https://www.google.com/maps/search/tr%E1%BA%A1m+thu+gom+r%C3%A1c+t%C3%A1i+ch%E1%BA%BF/@${origin.latitude},${origin.longitude},15z`;
     Linking.openURL(url).catch(() => {
       Alert.alert("Lỗi", "Không mở được ứng dụng Google Maps.");
     });
   };
 
-  // IN-APP NAVIGATION: Tính toán lộ trình đi bộ mượt mà
+  // IN-APP NAVIGATION: Tính toán lộ trình đi bộ
   const selectPoint = async (point: GeoPoint) => {
-    const origin = searchCenter || current || DEFAULT_MAP_REGION;
+    const origin = current || DEFAULT_MAP_REGION;
     setSelected(point);
     setRouteLoading(true);
     setRouteLine([]);
@@ -920,12 +938,15 @@ export function RecyclingMapScreen() {
 
   const onPullRefresh = async () => {
     setPullRefreshing(true);
-    await locate();
+    await locate(false);
+    if (points.length > 0) {
+      await searchAround();
+    }
     setPullRefreshing(false);
   };
 
   useEffect(() => {
-    locate();
+    locate(false);
   }, []);
 
   return <Screen refreshing={pullRefreshing} onRefresh={onPullRefresh}>
@@ -938,7 +959,7 @@ export function RecyclingMapScreen() {
         <Text style={s.mapAddressTitle}>ĐỊA CHỈ HIỆN TẠI</Text>
         <Text style={[s.mapAddress, { fontWeight: "700", color: colors.text }]}>{address}</Text>
       </View>
-      <TouchableOpacity onPress={locate} style={s.locateSmall}>
+      <TouchableOpacity onPress={goToMyLocation} style={s.locateSmall}>
         <Ionicons name="locate" color={colors.primary} size={20}/>
       </TouchableOpacity>
     </View>
@@ -948,13 +969,13 @@ export function RecyclingMapScreen() {
       <SafeMapErrorBoundary>
         <LeafletMapView
           mapRef={mapRef}
-          center={searchCenter || current || DEFAULT_MAP_REGION}
+          initialCenter={current || DEFAULT_MAP_REGION}
           points={sortedPoints}
           selected={selected}
           routeLine={routeLine}
           onSelectPoint={selectPoint}
           onCenterChanged={(lat, lon) => {
-            setSearchCenter({ latitude: lat, longitude: lon });
+            mapCenterRef.current = { latitude: lat, longitude: lon };
           }}
         />
       </SafeMapErrorBoundary>
@@ -978,7 +999,7 @@ export function RecyclingMapScreen() {
           elevation: 6,
           zIndex: 999,
         }}
-        onPress={locate}
+        onPress={goToMyLocation}
         activeOpacity={0.8}
       >
         <Ionicons name="locate" size={24} color="#1A73E8" />
@@ -986,14 +1007,16 @@ export function RecyclingMapScreen() {
 
       <View style={s.mapOverlayTag}>
         <Ionicons name="hand-left-outline" size={13} color={colors.primary}/>
-        <Text style={s.mapOverlayText}>Chạm điểm thu gom để xem thông tin & dẫn đường</Text>
+        <Text style={s.mapOverlayText}>
+          {points.length === 0 ? "Bấm 'Tìm quanh đây' để hiển thị điểm thu gom" : "Chạm điểm thu gom để xem thông tin & dẫn đường"}
+        </Text>
       </View>
     </View>
 
     {/* Action buttons */}
     <View style={s.mapActionRow}>
       <View style={{ flex: 1 }}>
-        <PrimaryButton title={locationState === "loading" ? "Đang định vị..." : "Vị trí của tôi"} icon="locate-outline" onPress={locate} loading={locationState === "loading"}/>
+        <PrimaryButton title={locationState === "loading" ? "Đang định vị..." : "Vị trí của tôi"} icon="locate-outline" onPress={goToMyLocation} loading={locationState === "loading"}/>
       </View>
       <View style={{ flex: 1 }}>
         <PrimaryButton title={searching ? "Đang tìm..." : "Tìm quanh đây"} icon="search-outline" onPress={() => searchAround()} loading={searching} outline/>
@@ -1086,18 +1109,29 @@ export function RecyclingMapScreen() {
       <Text style={{ fontSize: 14, fontWeight: "900", color: colors.text }}>
         Điểm thu gom thực tế TP.HCM ({sortedPoints.length})
       </Text>
-      <TouchableOpacity
-        style={{ flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: colors.pale, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 12 }}
-        onPress={() => setListExpanded(!listExpanded)}
-      >
-        <Text style={{ fontSize: 11, fontWeight: "800", color: colors.primary }}>
-          {listExpanded ? "Thu gọn ▲" : "Xem tất cả ▼"}
-        </Text>
-      </TouchableOpacity>
+      {sortedPoints.length > 0 ? (
+        <TouchableOpacity
+          style={{ flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: colors.pale, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 12 }}
+          onPress={() => setListExpanded(!listExpanded)}
+        >
+          <Text style={{ fontSize: 11, fontWeight: "800", color: colors.primary }}>
+            {listExpanded ? "Thu gọn ▲" : "Xem tất cả ▼"}
+          </Text>
+        </TouchableOpacity>
+      ) : null}
     </View>
 
-    {/* Horizontal compact scroll when collapsed */}
-    {!listExpanded ? (
+    {/* Khi chưa ấn tìm quanh đây */}
+    {sortedPoints.length === 0 ? (
+      <View style={{ padding: 18, backgroundColor: "#FFFFFF", borderRadius: 14, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: colors.line, marginTop: 4 }}>
+        <Ionicons name="search-circle-outline" size={38} color={colors.primary} />
+        <Text style={{ fontSize: 13, fontWeight: "800", color: colors.text, marginTop: 6 }}>Chưa quét điểm thu gom xung quanh</Text>
+        <Text style={{ fontSize: 11, color: colors.sub, textAlign: "center", marginTop: 4, lineHeight: 16 }}>
+          Bấm nút <Text style={{ fontWeight: "800", color: colors.primary }}>"Tìm quanh đây"</Text> ở trên để cập nhật và hiển thị danh sách các điểm thu gom rác thực tế gần bạn.
+        </Text>
+      </View>
+    ) : !listExpanded ? (
+      /* Horizontal compact scroll when collapsed */
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingVertical: 4 }}>
         {sortedPoints.map((point) => (
           <TouchableOpacity
