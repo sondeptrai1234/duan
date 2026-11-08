@@ -67,7 +67,7 @@ export function DashboardScreen({ navigation }: any) {
 
   const onRefresh = async () => { setRefreshing(true); await load(); setRefreshing(false); };
 
-  return <Screen>
+  return <Screen refreshing={refreshing} onRefresh={onRefresh}>
     <View style={s.homeHeader}>
       <View>
         <Text style={s.greeting}>Chào bạn, {user?.fullName?.split(" ").slice(-1)[0] || "Eco Friend"} 👋</Text>
@@ -521,19 +521,24 @@ class SafeMapErrorBoundary extends React.Component<{ fallback?: React.ReactNode;
 
 // COMPONENT BẢN ĐỒ GOOGLE MAPS THỜI GIAN THỰC (KHÔNG CẦN API KEY, KHÔNG BỊ ĐEN MÀN HÌNH)
 function LeafletMapView({
+  mapRef,
   center,
   points,
   selected,
   routeLine,
   onSelectPoint,
+  onCenterChanged,
 }: {
+  mapRef?: any;
   center: LatLng;
   points: GeoPoint[];
   selected: GeoPoint | null;
   routeLine: LatLng[];
   onSelectPoint: (p: GeoPoint) => void;
+  onCenterChanged?: (lat: number, lon: number) => void;
 }) {
-  const webViewRef = useRef<WebView>(null);
+  const localRef = useRef<any>(null);
+  const activeRef = mapRef || localRef;
 
   const html = useMemo(() => {
     const lat = center.latitude;
@@ -666,6 +671,8 @@ function LeafletMapView({
             attributionControl: false
           }).setView([${lat}, ${lon}], 15);
 
+          window.map = map;
+
           // GOOGLE MAPS STANDARD ROADMAP TILES (100% Real Google Maps Vietnam)
           var googleRoadmap = L.tileLayer('https://mt{s}.google.com/vt/lyrs=m&hl=vi&gl=VN&x={x}&y={y}&z={z}', {
             maxZoom: 20,
@@ -676,9 +683,30 @@ function LeafletMapView({
           // Google Maps Pulsing Blue Location Dot
           var userHtml = '<div class="user-point-wrapper"><div class="user-pulse-ring"></div><div class="user-core-dot"></div></div>';
           var userIcon = L.divIcon({ className: '', html: userHtml, iconSize: [22, 22], iconAnchor: [11, 11] });
-          L.marker([${lat}, ${lon}], { icon: userIcon, zIndexOffset: 9999 })
+          window.userMarker = L.marker([${lat}, ${lon}], { icon: userIcon, zIndexOffset: 9999 })
             .addTo(map)
             .bindPopup("<b>📍 Vị trí hiện tại của bạn</b><small style='color:#5f6368'>Tọa độ: ${lat.toFixed(4)}, ${lon.toFixed(4)}</small>");
+
+          // Hàm nhảy mượt về vị trí của tôi giống Google Maps
+          window.flyToLocation = function(targetLat, targetLon, targetZoom) {
+            if (window.map) {
+              window.map.flyTo([targetLat, targetLon], targetZoom || 16, { animate: true, duration: 1.2 });
+              if (window.userMarker) {
+                window.userMarker.setLatLng([targetLat, targetLon]);
+                setTimeout(function() {
+                  window.userMarker.openPopup();
+                }, 600);
+              }
+            }
+          };
+
+          // Lắng nghe sự kiện lướt bản đồ để cập nhật tọa độ tâm tìm kiếm
+          map.on('moveend', function() {
+            var c = map.getCenter();
+            if (window.ReactNativeWebView) {
+              window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'CENTER_CHANGED', lat: c.lat, lon: c.lng }));
+            }
+          });
 
           ${markersCode}
           ${routeCode}
@@ -692,7 +720,7 @@ function LeafletMapView({
 
   return (
     <WebViewComp
-      ref={webViewRef}
+      ref={activeRef}
       originWhitelist={["*"]}
       source={{ html }}
       style={{ flex: 1, backgroundColor: "#E8EAED" }}
@@ -714,6 +742,8 @@ function LeafletMapView({
           if (data.type === "SELECT") {
             const found = points.find((p) => p.id === data.id);
             if (found) onSelectPoint(found);
+          } else if (data.type === "CENTER_CHANGED" && onCenterChanged) {
+            onCenterChanged(data.lat, data.lon);
           }
         } catch {}
       }}
@@ -722,6 +752,7 @@ function LeafletMapView({
 }
 
 export function RecyclingMapScreen() {
+  const mapRef = useRef<any>(null);
   const [locationState, setLocationState] = useState<"idle" | "loading" | "granted" | "denied">("idle");
   const [current, setCurrent] = useState<LatLng | null>(null);
   const [searchCenter, setSearchCenter] = useState<LatLng | null>(null);
@@ -772,19 +803,34 @@ export function RecyclingMapScreen() {
       setCurrent(point);
       setSearchCenter(point);
       setLocationState("granted");
+
+      // TỰ ĐỘNG CHUYỂN ĐỘNG / BAY VỀ VỊ TRÍ GPS CỦA MÌNH (FLY TO LOCATION GIỐNG GOOGLE MAPS)
+      mapRef.current?.injectJavaScript(`
+        if (typeof window.flyToLocation === 'function') {
+          window.flyToLocation(${point.latitude}, ${point.longitude}, 16);
+        }
+        true;
+      `);
+
       await reverseAddress(point);
-      await searchAround(point);
+      await searchAround(point, false);
     } catch (error: any) {
       setLocationState("denied");
       // Fallback default coordinates (khu vực Gò Vấp - Nhà V Nguyễn Văn Bảo)
       const def = { latitude: 10.8222, longitude: 106.6875 };
       setCurrent(def);
       setSearchCenter(def);
+      mapRef.current?.injectJavaScript(`
+        if (typeof window.flyToLocation === 'function') {
+          window.flyToLocation(10.8222, 106.6875, 16);
+        }
+        true;
+      `);
       setAddress("Nhà V, Nguyễn Văn Bảo, Phường 4, Quận Gò Vấp, TP. Hồ Chí Minh");
     }
   };
 
-  const searchAround = async (point = searchCenter || current) => {
+  const searchAround = async (point = searchCenter || current, showAlert = true) => {
     if (!point) return;
     setSearching(true);
     try {
@@ -795,10 +841,12 @@ export function RecyclingMapScreen() {
         const nearest = result.points[0];
         selectPoint(nearest);
         const kmStr = nearest.distanceMeters >= 1000 ? `${(nearest.distanceMeters / 1000).toFixed(1)} km` : `${nearest.distanceMeters} m`;
-        Alert.alert(
-          "Đã tìm thấy điểm thu gom thực tế!",
-          `Đã tra cứu trên bản đồ và tìm thấy ${result.points.length} điểm thu gom rác tái chế quanh bạn.\n\nĐiểm gần nhất: ${nearest.name} (${kmStr}). Đang dẫn đường trên bản đồ!`
-        );
+        if (showAlert) {
+          Alert.alert(
+            "Đã tìm thấy điểm thu gom thực tế! 📍",
+            `Đã quét và tải lại ${result.points.length} điểm thu gom rác tái chế quanh khu vực này.\n\nĐiểm gần nhất: ${nearest.name} (${kmStr}). Đang chỉ đường trên bản đồ!`
+          );
+        }
       } else {
         setPoints(REAL_VIETNAM_RECYCLING_POINTS);
       }
@@ -868,11 +916,19 @@ export function RecyclingMapScreen() {
     });
   };
 
+  const [pullRefreshing, setPullRefreshing] = useState(false);
+
+  const onPullRefresh = async () => {
+    setPullRefreshing(true);
+    await locate();
+    setPullRefreshing(false);
+  };
+
   useEffect(() => {
     locate();
   }, []);
 
-  return <Screen>
+  return <Screen refreshing={pullRefreshing} onRefresh={onPullRefresh}>
     <Header title="Bản đồ điểm thu gom" subtitle="Dẫn đường trực tiếp trên app · Google Maps thời gian thực"/>
 
     {/* Actual address banner */}
@@ -891,13 +947,43 @@ export function RecyclingMapScreen() {
     <View style={s.realMapFrame}>
       <SafeMapErrorBoundary>
         <LeafletMapView
+          mapRef={mapRef}
           center={searchCenter || current || DEFAULT_MAP_REGION}
           points={sortedPoints}
           selected={selected}
           routeLine={routeLine}
           onSelectPoint={selectPoint}
+          onCenterChanged={(lat, lon) => {
+            setSearchCenter({ latitude: lat, longitude: lon });
+          }}
         />
       </SafeMapErrorBoundary>
+
+      {/* Floating My Location Button on Map (như Google Maps) */}
+      <TouchableOpacity
+        style={{
+          position: "absolute",
+          right: 12,
+          bottom: 46,
+          width: 44,
+          height: 44,
+          borderRadius: 22,
+          backgroundColor: "#FFFFFF",
+          justifyContent: "center",
+          alignItems: "center",
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.25,
+          shadowRadius: 4,
+          elevation: 6,
+          zIndex: 999,
+        }}
+        onPress={locate}
+        activeOpacity={0.8}
+      >
+        <Ionicons name="locate" size={24} color="#1A73E8" />
+      </TouchableOpacity>
+
       <View style={s.mapOverlayTag}>
         <Ionicons name="hand-left-outline" size={13} color={colors.primary}/>
         <Text style={s.mapOverlayText}>Chạm điểm thu gom để xem thông tin & dẫn đường</Text>

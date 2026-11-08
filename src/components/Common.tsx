@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import {
-  ActivityIndicator, KeyboardAvoidingView, Platform,
+  ActivityIndicator, KeyboardAvoidingView, Platform, RefreshControl,
   ScrollView, StyleSheet, Text, TextInput,
   TouchableOpacity, View,
   type TextInputProps, type ViewStyle, type StyleProp,
@@ -10,8 +10,19 @@ import { Ionicons } from "@expo/vector-icons";
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import { colors, fillColor } from "../theme";
 
-/** Màn hình có SafeAreaView + tự đẩy nội dung lên khi mở bàn phím */
-export function Screen({ children, scroll = true, style }: React.PropsWithChildren<{ scroll?: boolean; style?: StyleProp<ViewStyle> }>) {
+/** Màn hình có SafeAreaView + tự đẩy nội dung lên khi mở bàn phím + hỗ trợ kéo xuống để làm mới (Pull-to-Refresh) */
+export function Screen({
+  children,
+  scroll = true,
+  style,
+  refreshing,
+  onRefresh,
+}: React.PropsWithChildren<{
+  scroll?: boolean;
+  style?: StyleProp<ViewStyle>;
+  refreshing?: boolean;
+  onRefresh?: () => void;
+}>) {
   if (!scroll) {
     return (
       <SafeAreaView style={[styles.screen, style]} edges={["top", "left", "right"]}>
@@ -28,6 +39,16 @@ export function Screen({ children, scroll = true, style }: React.PropsWithChildr
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
+          refreshControl={
+            onRefresh ? (
+              <RefreshControl
+                refreshing={!!refreshing}
+                onRefresh={onRefresh}
+                colors={[colors.primary]}
+                tintColor={colors.primary}
+              />
+            ) : undefined
+          }
         >
           {children}
         </ScrollView>

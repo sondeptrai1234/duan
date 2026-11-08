@@ -9,6 +9,8 @@ import { colors } from "../theme";
 import { Field, PrimaryButton } from "../components/Common";
 import { api } from "../services/api";
 import { useApp } from "../context/AppContext";
+import { getApiUrl } from "../config";
+import { DeviceConfigModal } from "../components/DeviceConfigModal";
 import type { User } from "../types";
 
 export function LoginScreen({ navigation, route }: any) {
@@ -16,6 +18,7 @@ export function LoginScreen({ navigation, route }: any) {
   const [email, setEmail] = useState(route.params?.email || "");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [configModal, setConfigModal] = useState(false);
 
   // Quên mật khẩu modal state
   const [forgotModal, setForgotModal] = useState(false);
@@ -33,23 +36,29 @@ export function LoginScreen({ navigation, route }: any) {
     setLoading(true);
     try {
       const result = await api.post<{ user: User }>("/api/auth/login", {
-        email: email.trim().toLowerCase(), password,
+        email: email.trim().toLowerCase(),
+        password,
       });
-      login(result.user, false);
+      if (result?.user) {
+        login(result.user, false);
+      } else {
+        throw new Error("Không nhận được dữ liệu xác thực.");
+      }
     } catch (error: any) {
       if (error?.status === 401) {
-        Alert.alert("Không đăng nhập được", "Tên đăng nhập hoặc mật khẩu chưa chính xác.");
+        Alert.alert(
+          "Đăng nhập thất bại ❌",
+          "Tài khoản hoặc mật khẩu không chính xác trong hệ thống. Vui lòng kiểm tra lại!"
+        );
       } else {
-        // Backend offline fallback
-        const isAdm = email.trim().toLowerCase() === "admin" || email.trim().toLowerCase() === "admin@nhom4.vn";
-        const demoUser: User = {
-          id: 1,
-          fullName: isAdm ? "Admin Nhóm 4" : (email.split("@")[0] || "Người dùng Nhom4"),
-          email: isAdm ? "admin@nhom4.vn" : email.trim().toLowerCase(),
-        };
-        login(demoUser, true);
+        Alert.alert(
+          "Không thể xác thực tài khoản ⚠️",
+          `Không thể kết nối tới máy chủ (${getApiUrl()}) để xác thực tài khoản.\n\nVui lòng kiểm tra lại địa chỉ IP máy chủ hoặc kết nối mạng Wi-Fi!`
+        );
       }
-    } finally { setLoading(false); }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleResetPassword = async () => {
@@ -94,9 +103,19 @@ export function LoginScreen({ navigation, route }: any) {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Logo chiếc lá xanh trong khung bo tròn */}
-          <View style={s.logo}>
-            <Ionicons name="leaf" size={58} color={colors.primary} />
+          {/* Header row với icon cài đặt IP server */}
+          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", width: "100%", marginBottom: 12 }}>
+            <View style={{ width: 40 }} />
+            <View style={s.logo}>
+              <Ionicons name="leaf" size={48} color={colors.primary} />
+            </View>
+            <TouchableOpacity
+              onPress={() => setConfigModal(true)}
+              style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: "#E7F5EC", justifyContent: "center", alignItems: "center" }}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="settings-outline" size={20} color={colors.primary} />
+            </TouchableOpacity>
           </View>
           <Text style={s.brand}>Nhom4 🌿</Text>
           <Text style={s.tagline}>Hệ thống phân loại rác thông minh EcoBin</Text>
@@ -201,6 +220,11 @@ export function LoginScreen({ navigation, route }: any) {
           </View>
         </KeyboardAvoidingView>
       </Modal>
+
+      <DeviceConfigModal
+        visible={configModal}
+        onClose={() => setConfigModal(false)}
+      />
     </SafeAreaView>
   );
 }

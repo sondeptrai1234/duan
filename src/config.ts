@@ -16,7 +16,7 @@ const getHostIp = () => {
     const ip = hostUri.split(":")[0];
     if (ip && ip !== "localhost" && ip !== "127.0.0.1") return ip;
   }
-  return "10.235.74.79";
+  return "192.168.1.2";
 };
 
 export const DEFAULT_API_URL = (
