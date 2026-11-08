@@ -28,6 +28,7 @@ npx expo start
 cd server
 npm install
 npm start
+node server/index.js
 ```
 
 mở thư mục sql: connect và chạy.
@@ -44,19 +45,19 @@ Xem hướng dẫn chi tiết cách chạy Raspberry Pi tại [`code_ras/README.
 
 ```text
 ├── src/                    # Giao diện React Native (Expo)
-│   ├── components/         # Các UI component dùng chung
-│   ├── context/            # Quản lý State toàn cục (AppContext)
-│   ├── screens/            # Màn hình chính (Dashboard, Scan, Map, Notifications, Auth)
-│   └── services/           # Kết nối API, GPS, định vị, thông báo
+│   ├── components/         
+│   ├── context/            
+│   ├── screens/           
+│   └── services/           
 ├── server/                 # Backend Node.js / Express
 │   ├── index.js            # API server, xử lý ảnh, kết nối DB & AI
 │   └── uploads/            # Thư mục lưu trữ ảnh quét rác
 ├── code_ras/               # Mã nguồn Raspberry Pi & AI YOLOv8
-│   ├── best.pt             # Trọng số mô hình YOLOv8 (8 lớp rác)
-│   ├── smartbin_brain.py   # Luồng điều khiển camera, servo & gửi log
-│   ├── yolo_predict.py     # Script dự đoán AI trả kết quả JSON
-│   ├── raspi_wifi_portal.py# Captive Portal cấu hình WiFi
-│   └── README.md           # Hướng dẫn chạy trên Raspberry Pi
-├── assets/                 # Icon chiếc lá, splash screen và logo
-└── package.json            # Danh sách dependencies của ứng dụng
+│   ├── best.pt            
+│   ├── smartbin_brain.py   #
+│   ├── yolo_predict.py     
+│   ├── raspi_wifi_portal.py
+│   └── README.md           
+├── assets/                 
+└── package.json            
 ```
