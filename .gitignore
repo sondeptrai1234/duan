@@ -50,3 +50,6 @@ Thumbs.db
 best_saved_model/
 *.bat
 tools/
+
+# Local documents
+*.docx
