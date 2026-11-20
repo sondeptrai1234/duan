@@ -67,7 +67,7 @@ function getLocalChatAnswer(question: string, context?: any) {
 
   // 1. Người dùng hỏi về API / kết nối
   if (q.includes("api") || q.includes("kết nối") || q.includes("máy chủ") || q.includes("dg gọi") || q.includes("đang gọi")) {
-    return "Chào bạn! Hiện tại ứng dụng đang kết nối trực tiếp với Máy chủ Nhom4 API và Mô hình AI YOLO (best.pt) nội bộ.\nMọi câu hỏi và ảnh chụp của bạn đều được phân tích và phản hồi ngay lập tức.";
+    return "Chào bạn! Hiện tại ứng dụng đang kết nối trực tiếp với Máy chủ Nhóm 4 API và Mô hình AI YOLO (best.pt) nội bộ.\nMọi câu hỏi và ảnh chụp của bạn đều được phân tích và phản hồi ngay lập tức.";
   }
 
   // 2. Chào hỏi
@@ -308,7 +308,7 @@ export default function ChatScreen() {
       let result;
       if (useCamera) {
         const { status } = await ImagePicker.requestCameraPermissionsAsync();
-        if (status !== "granted") return Alert.alert("Cần quyền camera", "Hãy cho phép quyền chụp ảnh để quét rác.");
+        if (status !== "granted") return Alert.alert("Cần quyền camera", "Hãy cho phép quyền chụp ảnh để phân tích rác.");
         result = await ImagePicker.launchCameraAsync({ quality: 0.6, allowsEditing: true, aspect: [4, 3] });
       } else {
         result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], quality: 0.6, allowsEditing: true, aspect: [4, 3] });
@@ -331,7 +331,7 @@ export default function ChatScreen() {
 
   const handleUseRecentScan = async () => {
     if (!lastScanImage && !lastScan) {
-      return Alert.alert("Chưa có ảnh quét", "Hãy sang mục Quét rác để chụp một bức ảnh trước nhé.");
+      return Alert.alert("Chưa có ảnh phân tích", "Hãy chụp hoặc chọn một bức ảnh rác từ thư viện trước nhé.");
     }
     await sendMessage("Xem lại hướng dẫn xử lý của ảnh vừa quét gần nhất:", lastScanImage || undefined, lastScan as any);
   };

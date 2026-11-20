@@ -45,7 +45,7 @@ export function ScanResultScreen({ route, navigation }: any) {
     } catch { /* Local demo flow remains available when API is offline. */ }
     const item = { id: `scan-${Date.now()}`, title: "Phân loại thành công", message: `Bạn vừa phân loại ${result.wasteType} · ${result.category}.`, type: "bin-event" as const, createdAt: new Date().toISOString(), imageUrl: uri || null, detectedLabel: result.wasteType, category: result.category, confidence: result.confidence };
     addNotification(item);
-    await sendLocalNotification("Nhom4 · Phân loại thành công", `${result.wasteType} - ${result.category}`);
+    await sendLocalNotification("Nhóm 4 · Phân loại thành công", `${result.wasteType} - ${result.category}`);
     setSaving(false);
     Alert.alert("Đã ghi nhận", "Kết quả phân loại đã được thêm vào lịch sử trên ứng dụng.", [{ text: "Hoàn tất", onPress: () => navigation.navigate("MainTabs", { screen: "Trang chủ" }) }]);
   };

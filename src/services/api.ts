@@ -51,6 +51,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 export const api = {
   get: <T>(path: string) => request<T>(path),
   post: <T>(path: string, body: unknown) => request<T>(path, { method: "POST", body: JSON.stringify(body) }),
+  put: <T>(path: string, body: unknown) => request<T>(path, { method: "PUT", body: JSON.stringify(body) }),
   checkHealth: async (targetUrl?: string): Promise<{ ok: boolean; pingMs: number; data?: any; error?: string }> => {
     const url = (targetUrl || getApiUrl()).replace(/\/$/, "");
     const start = Date.now();

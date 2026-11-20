@@ -48,7 +48,7 @@ if (hasConfiguredCredentials) {
       poolInstance = p;
       isDbConnected = true;
       console.log("✅ Đã kết nối thành công SQL Server (Database: " + (process.env.DB_NAME || "SmartTrashDB") + ")");
-      // Đảm bảo schema có đầy đủ các cột mới
+      // Đảm bảo schema có đầy đủ các cột mới và sửa lỗi font Tiếng Việt nếu có
       p.request().query(`
         IF OBJECT_ID(N'dbo.Telemetry', N'U') IS NOT NULL
         BEGIN
@@ -56,7 +56,20 @@ if (hasConfiguredCredentials) {
             ALTER TABLE dbo.Telemetry ADD OrganicLidState NVARCHAR(20) NULL;
           IF COL_LENGTH(N'dbo.Telemetry', N'InorganicLidState') IS NULL
             ALTER TABLE dbo.Telemetry ADD InorganicLidState NVARCHAR(20) NULL;
-        END
+        END;
+
+        IF OBJECT_ID(N'dbo.TrashCans', N'U') IS NOT NULL
+        BEGIN
+          IF COL_LENGTH(N'dbo.TrashCans', N'EspIp') IS NULL
+            ALTER TABLE dbo.TrashCans ADD EspIp VARCHAR(60) NULL;
+          UPDATE dbo.TrashCans SET Name = N'Thùng 1', LocationName = N'Vị trí ESP32 Thùng 1 - EcoBin' WHERE TrashCanID = 1;
+          UPDATE dbo.TrashCans SET Name = N'Thùng 2', LocationName = N'Vị trí ESP32 Thùng 2 - EcoBin' WHERE TrashCanID = 2;
+        END;
+
+        IF OBJECT_ID(N'dbo.Users', N'U') IS NOT NULL
+        BEGIN
+          UPDATE dbo.Users SET FullName = N'Admin Nhóm 4' WHERE Email = 'admin@nhom4.vn';
+        END;
       `).catch(() => {});
     })
     .catch((error) => {

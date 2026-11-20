@@ -148,7 +148,7 @@ export function DeviceConfigModal({ visible, onClose, onSaved }: Props) {
               </View>
               <View>
                 <Text style={s.title}>Thiết bị & Cấu hình mạng</Text>
-                <Text style={s.subtitle}>EcoBin 2 ngăn · PI-NHOM4-001</Text>
+                <Text style={s.subtitle}>EcoBin 2 ngăn · Nhóm 4 (PI-NHOM4-001/002)</Text>
               </View>
             </View>
             <TouchableOpacity onPress={onClose} style={s.closeBtn}>
@@ -161,7 +161,7 @@ export function DeviceConfigModal({ visible, onClose, onSaved }: Props) {
             <View style={s.infoCard}>
               <View style={s.rowBetween}>
                 <Text style={s.infoLabel}>Mã định danh (MAC):</Text>
-                <Text style={s.infoValue}>PI-NHOM4-001</Text>
+                <Text style={s.infoValue}>PI-NHOM4-001 / PI-NHOM4-002</Text>
               </View>
               <View style={s.rowBetween}>
                 <Text style={s.infoLabel}>Cơ chế phân loại:</Text>

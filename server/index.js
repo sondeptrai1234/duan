@@ -7,7 +7,8 @@ const fs = require("fs");
 const crypto = require("crypto");
 const { promisify } = require("util");
 const { execFile } = require("child_process");
-const { sql, getPool, hasDatabaseCredentials } = require("./db");
+const db = require("./db");
+const { sql, getPool } = db;
 
 const scrypt = promisify(crypto.scrypt);
 const app = express();
@@ -34,6 +35,19 @@ function saveImageBase64(base64, mimeType = "image/jpeg") {
   return `/uploads/${filename}`;
 }
 function safeUser(row) { return { id: row.UserID, fullName: row.FullName, email: row.Email }; }
+function fixVietnameseText(str) {
+  if (!str || typeof str !== "string") return str;
+  return str
+    .replace(/ThÃ¹ng/g, "Thùng")
+    .replace(/Thng/g, "Thùng")
+    .replace(/ngÄƒn/g, "ngăn")
+    .replace(/V\?\s*tr[í\?]?/g, "Vị trí")
+    .replace(/Vị\s*trí+/g, "Vị trí")
+    .replace(/V\? tr/g, "Vị trí")
+    .replace(/NhÃ³m/g, "Nhóm")
+    .replace(/H\?u c/g, "Hữu cơ")
+    .replace(/V c/g, "Vô cơ");
+}
 async function hashPassword(password) {
   const salt = crypto.randomBytes(16).toString("hex");
   const key = await scrypt(password, salt, 64);
@@ -60,26 +74,86 @@ const memoryDb = {
   trashCans: [
     {
       TrashCanID: 1,
-      Name: "EcoBin · 2 ngăn",
+      Name: "Thùng 1",
       MacAddress: "PI-NHOM4-001",
+      EspIp: "192.168.106.140",
       Capacity: 200,
-      Status: "Offline",
-      LocationName: "Thiết bị Nhom4",
-      Latitude: 10.7818,
-      Longitude: 106.6998,
-      FillLevel: null,
-      OrganicFillLevel: null,
-      InorganicFillLevel: null,
+      Status: "Online",
+      LocationName: "Vị trí ESP32 Thùng 1 - EcoBin",
+      Latitude: 10.8222,
+      Longitude: 106.6875,
+      FillLevel: 42,
+      OrganicFillLevel: 35,
+      InorganicFillLevel: 50,
       LidState: "Closed",
       OrganicLidState: "Closed",
       InorganicLidState: "Closed",
-      RecordedAt: null
+      RecordedAt: new Date().toISOString()
+    },
+    {
+      TrashCanID: 2,
+      Name: "Thùng 2",
+      MacAddress: "PI-NHOM4-002",
+      EspIp: "192.168.106.61",
+      Capacity: 200,
+      Status: "Online",
+      LocationName: "Vị trí ESP32 Thùng 2 - EcoBin",
+      Latitude: 10.8235,
+      Longitude: 106.6890,
+      FillLevel: 68,
+      OrganicFillLevel: 75,
+      InorganicFillLevel: 60,
+      LidState: "Closed",
+      OrganicLidState: "Closed",
+      InorganicLidState: "Closed",
+      RecordedAt: new Date().toISOString()
     }
   ],
   telemetry: [],
   binEvents: [],
   wasteRecords: []
 };
+
+app.get("/", (req, res) => {
+  res.send(`
+    <!DOCTYPE html>
+    <html lang="vi">
+    <head>
+      <meta charset="UTF-8" />
+      <title>Nhom4 SmartBin API Server</title>
+      <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f172a; color: #f8fafc; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
+        .card { background: #1e293b; border-radius: 16px; padding: 32px; max-width: 580px; width: 100%; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.5); border: 1px solid #334155; }
+        .badge { display: inline-block; background: #059669; color: #fff; padding: 4px 12px; border-radius: 9999px; font-size: 13px; font-weight: 600; margin-bottom: 16px; }
+        h1 { margin: 0 0 8px 0; font-size: 24px; color: #38bdf8; }
+        p { color: #94a3b8; font-size: 15px; line-height: 1.6; margin: 8px 0; }
+        .api-list { margin-top: 20px; background: #0f172a; border-radius: 8px; padding: 12px 16px; }
+        .api-list a { color: #38bdf8; text-decoration: none; font-family: monospace; font-size: 14px; }
+        .api-list a:hover { text-decoration: underline; }
+        .tip { margin-top: 20px; padding: 12px 16px; background: rgba(56, 189, 248, 0.1); border-left: 4px solid #38bdf8; border-radius: 4px; font-size: 14px; color: #cbd5e1; }
+      </style>
+    </head>
+    <body>
+      <div class="card">
+        <span class="badge">● Server Đang Hoạt Động</span>
+        <h1>Nhom4 SmartWaste API</h1>
+        <p>Máy chủ Backend Node.js đã sẵn sàng phục vụ các yêu cầu từ Ứng dụng di động & Thiết bị thông minh Nhóm 4.</p>
+        
+        <div class="api-list">
+          <p style="margin: 0 0 8px 0; color: #64748b; font-size: 12px; text-transform: uppercase; font-weight: 600;">Các API kiểm tra nhanh:</p>
+          <div style="margin-bottom: 6px;">👉 <a href="/api/health" target="_blank">/api/health</a> (Kiểm tra trạng thái hệ thống)</div>
+          <div>👉 <a href="/api/trashcans" target="_blank">/api/trashcans</a> (Danh sách thùng rác)</div>
+        </div>
+
+        <div class="tip">
+          💡 <strong>Để mở Giao diện Ứng dụng Mobile:</strong><br/>
+          Mở thêm 1 cửa sổ Terminal mới, gõ: <code>cd duan-main</code> và chạy <code>npx.cmd expo start</code>
+        </div>
+      </div>
+    </body>
+    </html>
+  `);
+});
 
 app.get("/api/health", asyncRoute(async (req, res) => {
   const host = req.headers.host || "localhost:3000";
@@ -88,10 +162,10 @@ app.get("/api/health", asyncRoute(async (req, res) => {
     database: process.env.DB_NAME || "SmartTrashDB",
     user: process.env.DB_USER || "sa",
     port: process.env.DB_PORT || 1433,
-    status: hasDatabaseCredentials ? "connected" : "in-memory (sẵn sàng test)",
+    status: db.hasDatabaseCredentials ? "connected" : "in-memory (sẵn sàng test)",
   };
 
-  if (!hasDatabaseCredentials) {
+  if (!db.hasDatabaseCredentials) {
     return res.json({
       ok: true,
       service: "Nhom4 SmartWaste Backend",
@@ -137,7 +211,7 @@ app.post("/api/auth/register", asyncRoute(async (req, res) => {
   if (!fullName?.trim() || !email?.trim() || typeof password !== "string" || password.length < 6) return res.status(400).json({ error: "Nhập họ tên, email và mật khẩu tối thiểu 6 ký tự." });
   const normalizedEmail = email.trim().toLowerCase();
 
-  if (!hasDatabaseCredentials) {
+  if (!db.hasDatabaseCredentials) {
     if (memoryDb.users.some((u) => u.Email === normalizedEmail)) {
       return res.status(409).json({ error: "Email đã được đăng ký." });
     }
@@ -164,53 +238,101 @@ app.post("/api/auth/reset-password", asyncRoute(async (req, res) => {
   if (!email?.trim() || typeof password !== "string" || password.length < 6) {
     return res.status(400).json({ error: "Email/Tài khoản và mật khẩu mới tối thiểu 6 ký tự." });
   }
-  const inputEmail = email.trim().toLowerCase();
-  const normalizedEmail = (inputEmail === "admin") ? "admin@nhom4.vn" : inputEmail;
+  const rawInput = email.trim();
+  const inputLower = rawInput.toLowerCase();
+  const isAdminAlias = inputLower === "admin" || inputLower === "admin@nhom4.vn" || inputLower === "admin@nhom4.vn";
+  const normalizedEmail = isAdminAlias ? "admin@nhom4.vn" : inputLower;
 
-  if (!hasDatabaseCredentials) {
-    const user = memoryDb.users.find((u) => u.Email === normalizedEmail || (normalizedEmail === "admin@nhom4.vn" && u.Email === "admin"));
+  if (!db.hasDatabaseCredentials) {
+    const user = memoryDb.users.find((u) => {
+      const uEmail = (u.Email || "").toLowerCase();
+      const uName = (u.FullName || "").toLowerCase();
+      const uPrefix = uEmail.split("@")[0];
+      return (
+        uEmail === normalizedEmail ||
+        uEmail === inputLower ||
+        uName === inputLower ||
+        uPrefix === inputLower ||
+        (isAdminAlias && (uEmail === "admin@nhom4.vn" || uEmail === "admin@nhom4.vn" || uEmail === "admin"))
+      );
+    });
     if (!user) return res.status(404).json({ error: "Không tìm thấy tài khoản với email/tài khoản này." });
     user.PasswordHash = await hashPassword(password);
     return res.json({ ok: true, message: "Đổi mật khẩu thành công!" });
   }
 
   const pool = await getPool();
-  const existing = await pool.request()
-    .input("email", sql.NVarChar(255), normalizedEmail)
-    .query("SELECT UserID FROM Users WHERE Email = @email OR (Email = 'admin@nhom4.vn' AND @email = 'admin')");
-  if (!existing.recordset.length) {
-    return res.status(404).json({ error: "Không tìm thấy tài khoản với email này trong Database." });
+  const findResult = await pool.request()
+    .input("account", sql.NVarChar(255), normalizedEmail)
+    .input("raw", sql.NVarChar(255), rawInput)
+    .query(`
+      SELECT TOP 1 UserID, FullName, Email 
+      FROM Users 
+      WHERE LOWER(Email) = @account
+         OR LOWER(FullName) = LOWER(@raw)
+         OR LOWER(FullName) = @account
+         OR LOWER(LEFT(Email, CHARINDEX('@', Email + '@') - 1)) = @account
+         OR (Email IN ('admin@nhom4.vn', 'admin@nhom4.vn') AND @account = 'admin@nhom4.vn')
+    `);
+
+  if (!findResult.recordset.length) {
+    return res.status(404).json({ error: "Không tìm thấy tài khoản với email/tài khoản này trong Database." });
   }
 
+  const user = findResult.recordset[0];
   const passwordHash = await hashPassword(password);
   await pool.request()
-    .input("email", sql.NVarChar(255), normalizedEmail)
+    .input("userId", sql.Int, user.UserID)
     .input("hash", sql.NVarChar(180), passwordHash)
-    .query("UPDATE Users SET PasswordHash = @hash WHERE Email = @email OR (Email = 'admin@nhom4.vn' AND @email = 'admin')");
+    .query("UPDATE Users SET PasswordHash = @hash WHERE UserID = @userId");
 
   res.json({ ok: true, message: "Đổi mật khẩu thành công!" });
 }));
 
 app.post("/api/auth/login", asyncRoute(async (req, res) => {
   const { email, password } = req.body || {};
-  if (!email?.trim() || !password) return res.status(400).json({ error: "Email và mật khẩu là bắt buộc." });
-  const inputEmail = email.trim().toLowerCase();
-  const normalizedEmail = (inputEmail === "admin") ? "admin@nhom4.vn" : inputEmail;
+  if (!email?.trim() || !password) return res.status(400).json({ error: "Email/Tài khoản và mật khẩu là bắt buộc." });
+  const rawInput = email.trim();
+  const inputLower = rawInput.toLowerCase();
+  const isAdminAlias = inputLower === "admin" || inputLower === "admin@nhom4.vn" || inputLower === "admin@nhom4.vn";
+  const normalizedEmail = isAdminAlias ? "admin@nhom4.vn" : inputLower;
 
-  if (!hasDatabaseCredentials) {
-    const user = memoryDb.users.find((u) => u.Email === normalizedEmail || (normalizedEmail === "admin@nhom4.vn" && u.Email === "admin"));
+  if (!db.hasDatabaseCredentials) {
+    const user = memoryDb.users.find((u) => {
+      const uEmail = (u.Email || "").toLowerCase();
+      const uName = (u.FullName || "").toLowerCase();
+      const uPrefix = uEmail.split("@")[0];
+      return (
+        uEmail === normalizedEmail ||
+        uEmail === inputLower ||
+        uName === inputLower ||
+        uPrefix === inputLower ||
+        (isAdminAlias && (uEmail === "admin@nhom4.vn" || uEmail === "admin@nhom4.vn" || uEmail === "admin"))
+      );
+    });
     if (!user || !(await verifyPassword(password, user.PasswordHash))) {
-      return res.status(401).json({ error: "Email hoặc mật khẩu không chính xác." });
+      return res.status(401).json({ error: "Tài khoản hoặc mật khẩu không chính xác." });
     }
     return res.json({ user: safeUser(user) });
   }
 
   const pool = await getPool();
-  const result = await pool.request().input("email", sql.NVarChar(255), normalizedEmail).query("SELECT TOP 1 UserID, FullName, Email, PasswordHash FROM Users WHERE Email = @email OR (Email = 'admin@nhom4.vn' AND @email = 'admin')");
+  const result = await pool.request()
+    .input("account", sql.NVarChar(255), normalizedEmail)
+    .input("raw", sql.NVarChar(255), rawInput)
+    .query(`
+      SELECT TOP 1 UserID, FullName, Email, PasswordHash 
+      FROM Users 
+      WHERE LOWER(Email) = @account
+         OR LOWER(FullName) = LOWER(@raw)
+         OR LOWER(FullName) = @account
+         OR LOWER(LEFT(Email, CHARINDEX('@', Email + '@') - 1)) = @account
+         OR (Email IN ('admin@nhom4.vn', 'admin@nhom4.vn') AND @account = 'admin@nhom4.vn')
+    `);
   let user = result.recordset[0];
 
   // Auto seed admin in SQL Server if not already present
-  if (!user && (normalizedEmail === "admin@nhom4.vn" || normalizedEmail === "admin") && password === "admin123") {
+  if (!user && isAdminAlias && password === "admin123") {
     const adminHash = "a1b2c3d4e5f60718293a4b5c6d7e8f90:7c43f80888aec4f243a0260d244acb67ec6cf57fbd24d638206bd49f858714c66d1f344dfc0fd966549384e2021176646919ef63add209a8201a7ee09fab58f1";
     await pool.request()
       .input("name", sql.NVarChar(120), "Admin Nhóm 4")
@@ -221,13 +343,26 @@ app.post("/api/auth/login", asyncRoute(async (req, res) => {
     user = recheck.recordset[0];
   }
 
-  if (!user || !(await verifyPassword(password, user.PasswordHash))) return res.status(401).json({ error: "Email hoặc mật khẩu không chính xác." });
+  if (!user || !(await verifyPassword(password, user.PasswordHash))) return res.status(401).json({ error: "Tài khoản hoặc mật khẩu không chính xác." });
   res.json({ user: safeUser(user) });
 }));
 
 // Raspberry Pi 4 telemetry: distanceCm is measured from the ultrasonic sensor to the trash surface.
 app.post("/api/telemetry", asyncRoute(async (req, res) => {
-  const { macAddress, distanceCm, organicFillLevel, inorganicFillLevel, lidState, organicLidState, inorganicLidState } = req.body || {};
+  const {
+    macAddress,
+    binId,
+    name,
+    espIp,
+    espOnline,
+    distanceCm,
+    organicFillLevel,
+    inorganicFillLevel,
+    lidState,
+    organicLidState,
+    inorganicLidState
+  } = req.body || {};
+
   if (!macAddress) return res.status(400).json({ error: "macAddress là bắt buộc." });
   const hasCompartments = Number.isFinite(Number(organicFillLevel)) && Number.isFinite(Number(inorganicFillLevel));
   if (!hasCompartments && !Number.isFinite(Number(distanceCm))) return res.status(400).json({ error: "Gửi organicFillLevel + inorganicFillLevel hoặc distanceCm." });
@@ -248,17 +383,23 @@ app.post("/api/telemetry", asyncRoute(async (req, res) => {
   }
   const overallLid = (orgLid === "Open" || orgLid === "Mở" || inorgLid === "Open" || inorgLid === "Mở") ? "Open" : "Closed";
   const recordedAt = new Date().toISOString();
+  const isOnline = espOnline !== false;
 
-  if (!hasDatabaseCredentials) {
-    let can = memoryDb.trashCans.find((c) => c.MacAddress === macAddress);
+  if (!db.hasDatabaseCredentials) {
+    let can = memoryDb.trashCans.find((c) =>
+      c.MacAddress === macAddress ||
+      (binId && c.TrashCanID === Number(binId)) ||
+      (macAddress && ((macAddress.includes("001") && c.TrashCanID === 1) || (macAddress.includes("002") && c.TrashCanID === 2)))
+    );
     if (!can) {
       can = {
         TrashCanID: memoryDb.trashCans.length + 1,
-        Name: "EcoBin · 2 ngăn",
+        Name: name ? fixVietnameseText(name) : "EcoBin · 2 ngăn",
         MacAddress: macAddress,
+        EspIp: espIp || null,
         Capacity: 200,
-        Status: "Online",
-        LocationName: "Thiết bị Nhom4",
+        Status: isOnline ? "Online" : "Offline",
+        LocationName: "Thiết bị Nhóm 4",
         Latitude: 10.7818,
         Longitude: 106.6998,
         FillLevel: fillLevel,
@@ -271,24 +412,41 @@ app.post("/api/telemetry", asyncRoute(async (req, res) => {
       };
       memoryDb.trashCans.push(can);
     } else {
+      if (espIp) can.EspIp = espIp;
+      if (name) can.Name = fixVietnameseText(name);
+      if (macAddress) can.MacAddress = macAddress;
       can.FillLevel = fillLevel;
       can.OrganicFillLevel = organic;
       can.InorganicFillLevel = inorganic;
       can.OrganicLidState = orgLid;
       can.InorganicLidState = inorgLid;
       can.LidState = overallLid;
-      can.Status = "Online";
+      can.Status = isOnline ? "Online" : "Offline";
       can.RecordedAt = recordedAt;
     }
-    console.log(`[Telemetry] MAC: ${macAddress} | Ngăn 1 (Hữu cơ): ${organic}% (Nắp: ${orgLid}) | Ngăn 2 (Vô cơ): ${inorganic}% (Nắp: ${inorgLid}) | Tổng: ${fillLevel}% | Online`);
-    return res.json({ ok: true, trashCanId: can.TrashCanID, fillLevel, organicFillLevel: organic, inorganicFillLevel: inorganic, organicLidState: orgLid, inorganicLidState: inorgLid, status: "Online" });
+    console.log(`[Telemetry] MAC: ${macAddress} (ESP IP: ${espIp || "N/A"}) | Hữu cơ: ${organic}% | Vô cơ: ${inorganic}% | Trạng thái: ${can.Status}`);
+    return res.json({ ok: true, trashCanId: can.TrashCanID, espIp: can.EspIp, fillLevel, organicFillLevel: organic, inorganicFillLevel: inorganic, organicLidState: orgLid, inorganicLidState: inorgLid, status: can.Status });
   }
 
   const pool = await getPool();
-  const found = await pool.request().input("mac", sql.VarChar(50), macAddress).query("SELECT TrashCanID, Capacity FROM TrashCans WHERE MacAddress = @mac");
-  if (!found.recordset.length) return res.status(404).json({ error: "Không tìm thấy EcoBin theo MAC này. Chạy lại SQL tạo PI-NHOM4-001 hoặc sửa MAC trong cấu hình." });
-  const { TrashCanID, Capacity } = found.recordset[0];
-  const capacity = Number(Capacity);
+  let found = await pool.request().input("mac", sql.VarChar(50), macAddress).query("SELECT TrashCanID, Capacity FROM TrashCans WHERE MacAddress = @mac");
+  if (!found.recordset.length) {
+    const targetId = binId ? Number(binId) : (macAddress.includes("001") ? 1 : (macAddress.includes("002") ? 2 : null));
+    if (targetId) {
+      found = await pool.request().input("id", sql.Int, targetId).query("SELECT TrashCanID, Capacity FROM TrashCans WHERE TrashCanID = @id");
+    }
+  }
+
+  if (!found.recordset.length) {
+    const insertRes = await pool.request()
+      .input("name", sql.NVarChar(120), name ? fixVietnameseText(name) : "EcoBin 2 ngăn")
+      .input("mac", sql.VarChar(50), macAddress)
+      .input("ip", sql.VarChar(60), espIp || null)
+      .query("INSERT INTO TrashCans (Name, MacAddress, EspIp, Capacity, Status) OUTPUT INSERTED.TrashCanID, INSERTED.Capacity VALUES (@name, @mac, @ip, 200, 'Online')");
+    found = insertRes;
+  }
+
+  const { TrashCanID } = found.recordset[0];
 
   try {
     await pool.request()
@@ -299,31 +457,100 @@ app.post("/api/telemetry", asyncRoute(async (req, res) => {
       .input("lid", sql.NVarChar(20), overallLid)
       .input("orgLid", sql.NVarChar(20), orgLid)
       .input("inorgLid", sql.NVarChar(20), inorgLid)
-      .query("INSERT INTO Telemetry (TrashCanID, FillLevel, OrganicFillLevel, InorganicFillLevel, LidState, OrganicLidState, InorganicLidState) VALUES (@id, @fill, @organic, @inorganic, @lid, @orgLid, @inorgLid); UPDATE TrashCans SET Status = 'Online' WHERE TrashCanID = @id;");
+      .input("espIp", sql.VarChar(60), espIp || null)
+      .input("mac", sql.VarChar(50), macAddress)
+      .input("name", sql.NVarChar(120), name ? fixVietnameseText(name) : null)
+      .query(`
+        INSERT INTO Telemetry (TrashCanID, FillLevel, OrganicFillLevel, InorganicFillLevel, LidState, OrganicLidState, InorganicLidState) 
+        VALUES (@id, @fill, @organic, @inorganic, @lid, @orgLid, @inorgLid);
+        
+        UPDATE TrashCans 
+        SET Status = 'Online',
+            EspIp = COALESCE(@espIp, EspIp),
+            MacAddress = COALESCE(@mac, MacAddress),
+            Name = COALESCE(@name, Name)
+        WHERE TrashCanID = @id;
+      `);
   } catch (err) {
-    // Fallback nếu bảng cũ chưa có cột OrganicLidState / InorganicLidState
     await pool.request()
       .input("id", sql.Int, TrashCanID)
       .input("fill", sql.Float, fillLevel)
       .input("organic", sql.Float, organic)
       .input("inorganic", sql.Float, inorganic)
       .input("lid", sql.NVarChar(20), overallLid)
-      .query("INSERT INTO Telemetry (TrashCanID, FillLevel, OrganicFillLevel, InorganicFillLevel, LidState) VALUES (@id, @fill, @organic, @inorganic, @lid); UPDATE TrashCans SET Status = 'Online' WHERE TrashCanID = @id;");
+      .input("espIp", sql.VarChar(60), espIp || null)
+      .input("mac", sql.VarChar(50), macAddress)
+      .query(`
+        INSERT INTO Telemetry (TrashCanID, FillLevel, OrganicFillLevel, InorganicFillLevel, LidState) 
+        VALUES (@id, @fill, @organic, @inorganic, @lid);
+        
+        UPDATE TrashCans 
+        SET Status = 'Online',
+            EspIp = COALESCE(@espIp, EspIp),
+            MacAddress = COALESCE(@mac, MacAddress)
+        WHERE TrashCanID = @id;
+      `);
   }
 
-  res.json({ ok: true, trashCanId: TrashCanID, fillLevel, organicFillLevel: organic, inorganicFillLevel: inorganic, organicLidState: orgLid, inorganicLidState: inorgLid, status: "Online" });
+  res.json({ ok: true, trashCanId: TrashCanID, espIp: espIp || null, fillLevel, organicFillLevel: organic, inorganicFillLevel: inorganic, organicLidState: orgLid, inorganicLidState: inorgLid, status: "Online" });
+}));
+
+// Đồng bộ trực tiếp cấu hình Raspberry Pi (IP ESP32, tên thùng, MAC) lên hệ thống
+app.post("/api/raspi/sync-config", asyncRoute(async (req, res) => {
+  const { bins } = req.body || {};
+  if (!Array.isArray(bins)) return res.status(400).json({ error: "bins array là bắt buộc" });
+
+  if (!db.hasDatabaseCredentials) {
+    for (const b of bins) {
+      const can = memoryDb.trashCans.find((c) =>
+        c.TrashCanID === Number(b.binId) ||
+        c.MacAddress === b.macAddress ||
+        (b.macAddress && ((b.macAddress.includes("001") && c.TrashCanID === 1) || (b.macAddress.includes("002") && c.TrashCanID === 2)))
+      );
+      if (can) {
+        if (b.espIp) can.EspIp = b.espIp;
+        if (b.name) can.Name = fixVietnameseText(b.name);
+        if (b.macAddress) can.MacAddress = b.macAddress;
+      }
+    }
+    return res.json({ ok: true, message: "Đã đồng bộ cấu hình Raspberry Pi (In-memory)" });
+  }
+
+  const pool = await getPool();
+  for (const b of bins) {
+    const targetId = Number(b.binId) || (b.macAddress?.includes("001") ? 1 : 2);
+    if (targetId) {
+      await pool.request()
+        .input("id", sql.Int, targetId)
+        .input("name", sql.NVarChar(120), b.name ? fixVietnameseText(b.name) : `Thùng ${targetId}`)
+        .input("mac", sql.VarChar(50), b.macAddress || `PI-NHOM4-00${targetId}`)
+        .input("ip", sql.VarChar(60), b.espIp || null)
+        .query(`
+          IF EXISTS (SELECT 1 FROM TrashCans WHERE TrashCanID = @id)
+            UPDATE TrashCans 
+            SET Name = COALESCE(@name, Name),
+                MacAddress = COALESCE(@mac, MacAddress),
+                EspIp = COALESCE(@ip, EspIp)
+            WHERE TrashCanID = @id;
+          ELSE
+            INSERT INTO TrashCans (TrashCanID, Name, MacAddress, EspIp, Capacity, Status) 
+            VALUES (@id, @name, @mac, @ip, 200, 'Offline');
+        `);
+    }
+  }
+  res.json({ ok: true, message: "Đã đồng bộ cấu hình Raspberry Pi vào SQL Server" });
 }));
 
 app.get("/api/trashcans", asyncRoute(async (_req, res) => {
   const ONLINE_THRESHOLD_MS = 45000; // 45 giây không có dữ liệu mới từ Ras -> Offline
   const now = Date.now();
 
-  if (!hasDatabaseCredentials) {
+  if (!db.hasDatabaseCredentials) {
     const list = memoryDb.trashCans.map((can) => {
       const hasRecentData = can.RecordedAt && (now - new Date(can.RecordedAt).getTime() <= ONLINE_THRESHOLD_MS);
       return {
         ...can,
-        Status: hasRecentData ? "Online" : "Offline",
+        Status: hasRecentData ? "Online" : can.Status || "Offline",
       };
     });
     return res.json(list);
@@ -333,19 +560,19 @@ app.get("/api/trashcans", asyncRoute(async (_req, res) => {
   let result;
   try {
     result = await pool.request().query(`
-      SELECT TOP 1 c.TrashCanID, c.Name, c.MacAddress, c.Capacity, c.Status, c.LocationName, c.Latitude, c.Longitude,
+      SELECT c.TrashCanID, c.Name, c.MacAddress, c.Capacity, c.Status, c.LocationName, c.Latitude, c.Longitude, c.EspIp,
              t.FillLevel, t.OrganicFillLevel, t.InorganicFillLevel, t.LidState, t.OrganicLidState, t.InorganicLidState, t.RecordedAt
       FROM TrashCans c
       OUTER APPLY (SELECT TOP 1 * FROM Telemetry WHERE TrashCanID = c.TrashCanID ORDER BY RecordedAt DESC) t
-      ORDER BY CASE WHEN c.MacAddress = 'PI-NHOM4-001' THEN 0 ELSE 1 END, c.TrashCanID;
+      ORDER BY c.TrashCanID ASC;
     `);
   } catch (_e) {
     result = await pool.request().query(`
-      SELECT TOP 1 c.TrashCanID, c.Name, c.MacAddress, c.Capacity, c.Status, c.LocationName, c.Latitude, c.Longitude,
+      SELECT c.TrashCanID, c.Name, c.MacAddress, c.Capacity, c.Status, c.LocationName, c.Latitude, c.Longitude, c.EspIp,
              t.FillLevel, t.OrganicFillLevel, t.InorganicFillLevel, t.LidState, t.RecordedAt
       FROM TrashCans c
       OUTER APPLY (SELECT TOP 1 * FROM Telemetry WHERE TrashCanID = c.TrashCanID ORDER BY RecordedAt DESC) t
-      ORDER BY CASE WHEN c.MacAddress = 'PI-NHOM4-001' THEN 0 ELSE 1 END, c.TrashCanID;
+      ORDER BY c.TrashCanID ASC;
     `);
   }
 
@@ -353,12 +580,45 @@ app.get("/api/trashcans", asyncRoute(async (_req, res) => {
     const hasRecentData = row.RecordedAt && (now - new Date(row.RecordedAt).getTime() <= ONLINE_THRESHOLD_MS);
     return {
       ...row,
+      Name: fixVietnameseText(row.Name) || `Thùng ${row.TrashCanID}`,
+      EspIp: row.EspIp || null,
+      LocationName: fixVietnameseText(row.LocationName) || "EcoBin 2 ngăn",
       Status: hasRecentData ? "Online" : "Offline",
       OrganicLidState: row.OrganicLidState || row.LidState || "Closed",
       InorganicLidState: row.InorganicLidState || row.LidState || "Closed",
     };
   });
   res.json(rows);
+}));
+
+app.put("/api/trashcans/:id/location", asyncRoute(async (req, res) => {
+  const { id } = req.params;
+  const { latitude, longitude, locationName } = req.body || {};
+  if (!Number.isFinite(Number(latitude)) || !Number.isFinite(Number(longitude))) {
+    return res.status(400).json({ error: "Tọa độ không hợp lệ." });
+  }
+  const lat = Number(latitude);
+  const lon = Number(longitude);
+  const locName = locationName ? String(locationName).trim() : null;
+
+  if (!db.hasDatabaseCredentials) {
+    const can = memoryDb.trashCans.find((c) => c.TrashCanID === Number(id));
+    if (!can) return res.status(404).json({ error: "Không tìm thấy thùng rác." });
+    can.Latitude = lat;
+    can.Longitude = lon;
+    if (locName) can.LocationName = locName;
+    return res.json({ ok: true, can });
+  }
+
+  const pool = await getPool();
+  await pool.request()
+    .input("id", sql.Int, Number(id))
+    .input("lat", sql.Float, lat)
+    .input("lon", sql.Float, lon)
+    .input("loc", sql.NVarChar(200), locName)
+    .query("UPDATE TrashCans SET Latitude = @lat, Longitude = @lon, LocationName = COALESCE(@loc, LocationName) WHERE TrashCanID = @id;");
+
+  res.json({ ok: true, message: "Đã cập nhật vị trí thùng rác thành công." });
 }));
 
 function groqError(status, detail) {
@@ -370,8 +630,19 @@ function groqError(status, detail) {
   return error;
 }
 
-// Built-in intelligent fallback for offline / API key errors matching best.pt 8 classes
+// Built-in intelligent fallback for offline / API key errors matching best.pt classes
 function generateLocalClassification(customClass) {
+  const normalizedClass = {
+    "huu_co": "rac-huu-co",
+    "huu-co": "rac-huu-co",
+    "chai_nhua": "chai-nhua",
+    "lon_nhom": "lon-nuoc-giai-khat-bang-kim-loai",
+    "lon-nhom": "lon-nuoc-giai-khat-bang-kim-loai",
+    "nilong": "tui-nilon",
+    "nilon": "tui-nilon",
+    "khau_trang": "khau-trang",
+  }[customClass] || customClass;
+
   const classes = {
     "rac-huu-co": {
       wasteType: "Rác hữu cơ (Thực phẩm thừa / Vỏ củ quả)",
@@ -434,7 +705,7 @@ function generateLocalClassification(customClass) {
       classificationMode: "on-device",
     },
     "lon-nuoc-giai-khat-bang-kim-loai": {
-      wasteType: "Lon nhôm / Lon nước ngọt kim loại",
+      wasteType: "lon nhôm / Lon nước ngọt kim loại",
       material: "Nhôm kim loại (Al)",
       category: "Vô cơ",
       confidence: 96,
@@ -487,8 +758,8 @@ function generateLocalClassification(customClass) {
     }
   };
 
-  // Ưu tiên nhận diện đúng 8 lớp trong best.pt
-  if (customClass && classes[customClass]) return classes[customClass];
+  // Ưu tiên nhận diện đúng các lớp trong best.pt
+  if (normalizedClass && classes[normalizedClass]) return classes[normalizedClass];
 
   // Nếu không chỉ định hoặc không rõ -> Trả về KHÔNG RÕ (tuyệt đối không random bừa)
   return classes["khong-co-rac"];
@@ -517,7 +788,7 @@ function generateLocalChatReply(message, context) {
     } else if (cCat === "Vô cơ") {
       return `Vật thể (${cWaste || "vật liệu vô cơ"}) thuộc nhóm [Ngăn 2 · Vô cơ]. Bạn nên làm sạch phần nước bên trong, để khô và bóp bẹp nếu được trước khi bỏ vào thùng.`;
     }
-    return "Thùng rác thông minh Nhom4 có đúng 2 ngăn:\n- Ngăn 1: Rác hữu cơ (thức ăn thừa, vỏ rau củ quả, bã cà phê, hoa lá...)\n- Ngăn 2: Rác vô cơ (chai nhựa, lon nhôm, hộp giấy, túi nilon, thủy tinh, khẩu trang...)\nLưu ý: Pin cũ, bóng đèn, hóa chất tuyệt đối không bỏ vào 2 ngăn này mà cần điểm thu gom riêng.";
+    return "Thùng rác thông minh Nhóm 4 có đúng 2 ngăn:\n- Ngăn 1: Rác hữu cơ (thức ăn thừa, vỏ rau củ quả, bã cà phê, hoa lá...)\n- Ngăn 2: Rác vô cơ (chai nhựa, lon nhôm, hộp giấy, túi nilon, thủy tinh, khẩu trang...)\nLưu ý: Pin cũ, bóng đèn, hóa chất tuyệt đối không bỏ vào 2 ngăn này mà cần điểm thu gom riêng.";
   }
 
   // Rửa sạch
@@ -768,7 +1039,7 @@ app.post("/api/ai/chat", asyncRoute(async (req, res) => {
   if (message.length > 1500) return res.status(413).json({ error: "Câu hỏi quá dài. Giới hạn 1.500 ký tự." });
 
   try {
-    const systemInstruction = `Bạn là chatbot trợ lý thông minh tư vấn phân loại và xử lý rác của ứng dụng Nhom4. Thùng rác EcoBin chỉ có đúng 2 ngăn: Ngăn 1 Hữu cơ (thức ăn, vỏ củ quả, lá cây...); Ngăn 2 Vô cơ (chai nhựa, lon nhôm, giấy, thủy tinh...). Rác nguy hại (pin, đèn, bình xịt, rác y tế, dao nhọn) tuyệt đối Không bỏ vào hai ngăn mà phải hướng dẫn giữ riêng an toàn mang tới điểm thu gom. Nhiệm vụ của bạn: giải thích cách làm sạch, lưu trữ, tái chế, hướng dẫn người dùng bỏ đúng ngăn và trả lời thân thiện, nhiệt tình bằng tiếng Việt. Ngữ cảnh phân loại hiện tại: ${JSON.stringify(context || {})}.`;
+    const systemInstruction = `Bạn là chatbot trợ lý thông minh tư vấn phân loại và xử lý rác của ứng dụng Nhóm 4. Thùng rác EcoBin chỉ có đúng 2 ngăn: Ngăn 1 Hữu cơ (thức ăn, vỏ củ quả, lá cây...); Ngăn 2 Vô cơ (chai nhựa, lon nhôm, giấy, thủy tinh...). Rác nguy hại (pin, đèn, bình xịt, rác y tế, dao nhọn) tuyệt đối Không bỏ vào hai ngăn mà phải hướng dẫn giữ riêng an toàn mang tới điểm thu gom. Nhiệm vụ của bạn: giải thích cách làm sạch, lưu trữ, tái chế, hướng dẫn người dùng bỏ đúng ngăn và trả lời thân thiện, nhiệt tình bằng tiếng Việt. Ngữ cảnh phân loại hiện tại: ${JSON.stringify(context || {})}.`;
 
     const messages = [{ role: "system", content: systemInstruction }];
 
@@ -798,7 +1069,7 @@ app.post("/api/waste-records", asyncRoute(async (req, res) => {
   const { userId, wasteType, category, confidence, classificationMode = "demo", imageUrl = null } = req.body || {};
   if (!wasteType || !category) return res.status(400).json({ error: "Thiếu wasteType hoặc category." });
 
-  if (!hasDatabaseCredentials) {
+  if (!db.hasDatabaseCredentials) {
     const record = {
       RecordID: Date.now(),
       UserID: userId ? Number(userId) : null,
@@ -826,7 +1097,7 @@ app.post("/api/waste-records", asyncRoute(async (req, res) => {
 }));
 
 app.get("/api/waste-records", asyncRoute(async (req, res) => {
-  if (!hasDatabaseCredentials) {
+  if (!db.hasDatabaseCredentials) {
     let list = memoryDb.wasteRecords;
     if (req.query.userId) {
       list = list.filter((r) => r.UserID === Number(req.query.userId));
@@ -849,7 +1120,7 @@ app.post("/api/bin-events", asyncRoute(async (req, res) => {
   if (!macAddress) return res.status(400).json({ error: "macAddress là bắt buộc." });
   const imageUrl = saveImageBase64(imageBase64, mimeType);
 
-  if (!hasDatabaseCredentials) {
+  if (!db.hasDatabaseCredentials) {
     const event = {
       EventID: Date.now(),
       TrashCanID: 1,
@@ -894,7 +1165,7 @@ app.post("/api/bin-events", asyncRoute(async (req, res) => {
 }));
 
 app.get("/api/bin-events", asyncRoute(async (_req, res) => {
-  if (!hasDatabaseCredentials) {
+  if (!db.hasDatabaseCredentials) {
     return res.json(memoryDb.binEvents.slice(0, 40));
   }
 

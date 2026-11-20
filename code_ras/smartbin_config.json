@@ -1,8 +1,18 @@
 {
-  "esp32_ip": "192.168.1.100",
-  "backend_url": "http://192.168.1.50:3000",
-  "mac_address": "PI-NHOM4-001",
+  "backend_url": "http://192.168.1.84:3000",
   "model_path": "best.pt",
   "conf_threshold": 0.35,
-  "lid_open_seconds": 5.0
+  "lid_open_seconds": 5.0,
+  "bins": [
+    {
+      "name": "Thùng 1",
+      "mac_address": "PI-NHOM4-001",
+      "esp32_ip": "192.168.1.151"
+    },
+    {
+      "name": "Thùng 2",
+      "mac_address": "PI-NHOM4-002",
+      "esp32_ip": "192.168.1.152"
+    }
+  ]
 }

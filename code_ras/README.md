@@ -1,4 +1,4 @@
-# Code Raspberry Pi & AI YOLOv8 (EcoBin - Nhom 4)
+# Code Raspberry Pi & AI YOLOv8 (EcoBin - Nhóm 4)
 
 Thư mục này chứa toàn bộ mã nguồn chạy trên Raspberry Pi / máy tính nhúng và mô hình AI YOLOv8 (`best.pt`) nhận diện phân loại 8 nhóm rác thải tự động.
 

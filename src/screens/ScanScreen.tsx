@@ -118,7 +118,7 @@ export default function ScanScreen({ navigation }: any) {
           </TouchableOpacity>
         </View>
         <View style={s.tip}><Ionicons name="sunny-outline" size={22} color={colors.warn}/><View style={{flex:1}}><Text style={s.tipTitle}>Mẹo chụp ảnh chính xác</Text><Text style={s.tipText}>Đặt một vật thể ở giữa khung, đủ sáng và không che khuất.</Text></View></View>
-        <View style={s.consent}><View style={{flex:1}}><Text style={s.consentTitle}>Bật AI Phân loại & Trợ lý</Text><Text style={s.consentText}>Mặc định chạy mô hình AI nội bộ Nhom4 (best.pt) trên máy.</Text></View><Switch value={cloudConsent} onValueChange={setCloudConsent} trackColor={{false:"#DDE7DF",true:"#9ADAB7"}} thumbColor={cloudConsent ? colors.primary : "#FFFFFF"}/></View>
+        <View style={s.consent}><View style={{flex:1}}><Text style={s.consentTitle}>Bật AI Phân loại & Trợ lý</Text><Text style={s.consentText}>Mặc định chạy mô hình AI nội bộ Nhóm 4 (best.pt) trên máy.</Text></View><Switch value={cloudConsent} onValueChange={setCloudConsent} trackColor={{false:"#DDE7DF",true:"#9ADAB7"}} thumbColor={cloudConsent ? colors.primary : "#FFFFFF"}/></View>
         <Text style={s.privacy}><Ionicons name="shield-checkmark-outline" size={13}/> Camera tự tắt khi rời màn hình. Tự động nhận diện bằng mô hình AI.</Text>
       </ScrollView>
     </SafeAreaView>

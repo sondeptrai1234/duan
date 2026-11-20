@@ -1,7 +1,7 @@
 import type { WasteClassification } from "../types";
 
 /**
- * Mô hình AI Offline phân loại sơ bộ Nhom4 dựa trên bộ 8 lớp chuẩn từ mô hình best.pt (YOLO):
+ * Mô hình AI Offline phân loại sơ bộ Nhóm 4 dựa trên bộ 8 lớp chuẩn từ mô hình best.pt (YOLO):
  *
  * 1. rac-huu-co                     -> Ngăn 1 · Hữu cơ
  * 2. chai-nhua                      -> Ngăn 2 · Vô cơ
@@ -118,7 +118,7 @@ export const SMARTBIN_CLASS_DETAILS: Record<
   },
   "lon-nuoc-giai-khat-bang-kim-loai": {
     label: "lon-nuoc-giai-khat-bang-kim-loai",
-    wasteType: "Lon nhôm / Lon bia, nước ngọt kim loại",
+    wasteType: "lon nhôm / Lon bia, nước ngọt kim loại",
     category: "Vô cơ",
     binCompartment: "Ngăn 2 · Vô cơ",
     material: "Nhôm kim loại (Al)",

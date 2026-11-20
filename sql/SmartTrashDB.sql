@@ -88,9 +88,11 @@ BEGIN
 END;
 GO
 
-/* One physical EcoBin with two separate compartments: organic and inorganic. */
+/* Two physical EcoBins with two separate compartments: organic and inorganic. */
 IF NOT EXISTS (SELECT 1 FROM dbo.TrashCans WHERE MacAddress = 'PI-NHOM4-001')
-  INSERT dbo.TrashCans (Name, MacAddress, Capacity, Status, LocationName) VALUES (N'EcoBin · 2 ngăn', 'PI-NHOM4-001', 200, 'Offline', N'Thiết bị Nhom4');
+  INSERT dbo.TrashCans (Name, MacAddress, Capacity, Status, LocationName) VALUES (N'Thùng 1', 'PI-NHOM4-001', 200, 'Offline', N'EcoBin 2 ngăn');
+IF NOT EXISTS (SELECT 1 FROM dbo.TrashCans WHERE MacAddress = 'PI-NHOM4-002')
+  INSERT dbo.TrashCans (Name, MacAddress, Capacity, Status, LocationName) VALUES (N'Thùng 2', 'PI-NHOM4-002', 200, 'Offline', N'EcoBin 2 ngăn');
 GO
 
 /* Default Admin Account: admin / admin123 */

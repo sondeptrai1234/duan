@@ -247,7 +247,7 @@ class ProvisioningHandler(http.server.BaseHTTPRequestHandler):
         <h2>🎉 THÀNH CÔNG!</h2>
         <p><b>{wifi_msg}</b></p>
         <p>• Địa chỉ Backend mới: <b>{backend_url}</b><br>• Camera ESP32: <b>{esp32_ip}</b></p>
-        <p>Bây giờ bạn có thể kết nối điện thoại về mạng <b>{ssid}</b> và mở App Nhom4 để giám sát thùng rác!</p>
+        <p>Bây giờ bạn có thể kết nối điện thoại về mạng <b>{ssid}</b> và mở App Nhóm 4 để giám sát thùng rác!</p>
     </div>
 </body>
 </html>"""

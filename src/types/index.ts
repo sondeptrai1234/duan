@@ -1,6 +1,7 @@
 export type User = { id?: number; fullName: string; email: string };
 export type TrashCan = {
   TrashCanID: number; Name: string; MacAddress?: string; Capacity?: number; Status?: string;
+  EspIp?: string | null;
   FillLevel?: number | null; OrganicFillLevel?: number | null; InorganicFillLevel?: number | null;
   LidState?: string | null;
   OrganicLidState?: string | null;

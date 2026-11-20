@@ -9,14 +9,16 @@ import * as FileSystem from "expo-file-system/legacy";
 const getHostIp = () => {
   const hostUri =
     Constants.expoConfig?.hostUri ||
+    (Constants as any).expoGoConfig?.debuggerHost ||
     (Constants as any).manifest?.debuggerHost ||
+    (Constants as any).manifest2?.extra?.expoGo?.debuggerHost ||
     (Constants as any).manifest2?.extra?.expoClient?.hostUri;
 
   if (hostUri) {
     const ip = hostUri.split(":")[0];
     if (ip && ip !== "localhost" && ip !== "127.0.0.1") return ip;
   }
-  return "192.168.1.2";
+  return "192.168.1.84";
 };
 
 export const DEFAULT_API_URL = (

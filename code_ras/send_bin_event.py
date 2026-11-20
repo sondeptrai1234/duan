@@ -1,10 +1,10 @@
-"""Send one camera frame from Raspberry Pi to Nhom4 API after a bin event.
+"""Send one camera frame from Raspberry Pi to Nhóm 4 API after a bin event.
 
 Example:
   python send_bin_event.py --server http://192.168.1.10:3000 --mac-address AA:BB:CC:DD:EE:FF --image /tmp/bin-frame.jpg
 
 Call this script from the existing sensor/camera loop whenever an object is detected.
-With --classify, the image is sent to the Nhom4 backend AI Vision endpoint first, then
+With --classify, the image is sent to the Nhóm 4 backend AI Vision endpoint first, then
 the image and returned label/category/confidence are recorded as a bin event.
 This script does not capture the frame; --image must point to a photo already captured.
 """

@@ -117,7 +117,7 @@ export function LoginScreen({ navigation, route }: any) {
               <Ionicons name="settings-outline" size={20} color={colors.primary} />
             </TouchableOpacity>
           </View>
-          <Text style={s.brand}>Nhom4 🌿</Text>
+          <Text style={s.brand}>Nhóm 4 🌿</Text>
           <Text style={s.tagline}>Hệ thống phân loại rác thông minh EcoBin</Text>
 
           <Text style={s.sectionTitle}>Đăng nhập</Text>
@@ -161,7 +161,7 @@ export function LoginScreen({ navigation, route }: any) {
           <View style={s.privacyBox}>
             <Ionicons name="shield-checkmark-outline" size={14} color={colors.primary} />
             <Text style={s.privacyText}>
-              {"Nhom4 cam kết bảo mật dữ liệu.\nKhông chia sẻ thông tin với bất kỳ bên thứ ba nào."}
+              {"Nhóm 4 cam kết bảo mật dữ liệu.\nKhông chia sẻ thông tin với bất kỳ bên thứ ba nào."}
             </Text>
           </View>
         </ScrollView>
@@ -294,7 +294,7 @@ export function RegisterScreen({ navigation }: any) {
             <Ionicons name="leaf" size={34} color={colors.primary} />
           </View>
           <Text style={s.brand}>Tạo tài khoản</Text>
-          <Text style={s.tagline}>Tham gia cộng đồng phân loại rác EcoBin Nhom4 🌿</Text>
+          <Text style={s.tagline}>Tham gia cộng đồng phân loại rác EcoBin Nhóm 4 🌿</Text>
 
           <Field
             label="Họ và tên"
@@ -336,7 +336,7 @@ export function RegisterScreen({ navigation }: any) {
           <View style={s.privacyBox}>
             <Ionicons name="shield-checkmark-outline" size={14} color={colors.primary} />
             <Text style={s.privacyText}>
-              {"Bằng cách đăng ký, bạn đồng ý với Điều khoản sử dụng của Nhom4.\nThông tin được lưu trữ an toàn trong Database."}
+              {"Bằng cách đăng ký, bạn đồng ý với Điều khoản sử dụng của Nhóm 4.\nThông tin được lưu trữ an toàn trong Database."}
             </Text>
           </View>
         </ScrollView>

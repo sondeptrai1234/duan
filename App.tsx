@@ -33,7 +33,7 @@ export const navigationRef = createNavigationContainerRef<any>();
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
-// Deep links: nhom4://scan, nhom4://guide, nhom4://notifications, nhom4://bin-event.
+// Deep links: nhom4://guide, nhom4://notifications, nhom4://bin-event.
 const linking: any = {
   prefixes: ["nhom4://", "https://nhom4.local"],
   config: {
@@ -42,7 +42,7 @@ const linking: any = {
       Register: "register",
       MainTabs: {
         path: "app",
-        screens: { "Trang chủ": "home", "Quét rác": "scan", "Thùng rác": "bins", "Bản đồ": "map", "Trợ lý AI": "chat" },
+        screens: { "Trang chủ": "home", "Thùng rác": "bins", "Bản đồ": "map" },
       },
       ScanResult: "scan-result",
       WasteGuide: "guide",
@@ -58,18 +58,20 @@ function MainTabs() {
     headerShown: false,
     tabBarActiveTintColor: colors.primary,
     tabBarInactiveTintColor: colors.sub,
-    tabBarLabelStyle: { fontSize: 9, fontWeight: "700", marginBottom: 3 },
-    tabBarStyle: { height: 64, paddingTop: 7, borderTopColor: colors.line, backgroundColor: "#FFFFFF", elevation: 8 },
+    tabBarLabelStyle: { fontSize: 11, fontWeight: "700", marginBottom: 4 },
+    tabBarStyle: { height: 62, paddingTop: 6, borderTopColor: colors.line, backgroundColor: "#FFFFFF", elevation: 6 },
     tabBarIcon: ({ color, size }) => {
-      const icons: Record<string, keyof typeof Ionicons.glyphMap> = { "Trang chủ": "home-outline", "Quét rác": "scan-outline", "Thùng rác": "trash-outline", "Bản đồ": "map-outline", "Trợ lý AI": "chatbubble-ellipses-outline" };
-      return <Ionicons name={icons[route.name] || "ellipse-outline"} size={size} color={color}/>;
+      const icons: Record<string, keyof typeof Ionicons.glyphMap> = {
+        "Trang chủ": "home-outline",
+        "Thùng rác": "trash-outline",
+        "Bản đồ": "location-outline",
+      };
+      return <Ionicons name={icons[route.name] || "ellipse-outline"} size={size || 22} color={color}/>;
     },
   })}>
     <Tab.Screen name="Trang chủ" component={DashboardScreen}/>
-    <Tab.Screen name="Quét rác" component={ScanScreen}/>
     <Tab.Screen name="Thùng rác" component={SmartBinScreen}/>
-    <Tab.Screen name="Bản đồ" component={RecyclingMapScreen}/>
-    <Tab.Screen name="Trợ lý AI" component={ChatScreen}/>
+    <Tab.Screen name="Bản đồ" component={RecyclingMapScreen} options={{ tabBarLabel: "Vị trí thùng rác" }}/>
   </Tab.Navigator>;
 }
 function RootNavigator() {
@@ -152,6 +154,7 @@ function RootNavigator() {
         <Stack.Screen name="Register" component={RegisterScreen}/>
       </> : <>
         <Stack.Screen name="MainTabs" component={MainTabs}/>
+        <Stack.Screen name="Scan" component={ScanScreen}/>
         <Stack.Screen name="ScanResult" component={ScanResultScreen} options={{ animation: "slide_from_bottom" }}/>
         <Stack.Screen name="WasteGuide" component={WasteGuideScreen}/>
         <Stack.Screen name="Notifications" component={NotificationsScreen}/>

@@ -27,7 +27,7 @@ export async function ensureNotificationPermission(): Promise<boolean> {
     if (Platform.OS === "android") {
       // Channel với độ ưu tiên MAX để bung biểu ngữ thông báo (Heads-up) kèm âm thanh rung
       await Notifications.setNotificationChannelAsync("nhom4-alerts", {
-        name: "Cảnh báo & Nhận diện EcoBin",
+        name: "Cảnh báo & Nhận diện EcoBin Nhóm 4",
         importance: Notifications.AndroidImportance.MAX,
         vibrationPattern: [0, 250, 200, 250],
         lightColor: "#13865A",

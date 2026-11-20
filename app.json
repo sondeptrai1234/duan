@@ -81,11 +81,9 @@
     "scheme": "nhom4",
     "extra": {
       "eas": {
-        "projectId": "b444cc44-283c-4225-bec9-4f46c443addd"
+        "projectId": "54ec09d2-30b4-441f-ab0c-508bc3070cfb"
       }
     },
-    "updates": {
-      "url": "https://u.expo.dev/b444cc44-283c-4225-bec9-4f46c443addd"
-    }
+    "owner": "aaiiiu"
   }
 }
